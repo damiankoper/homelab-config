@@ -5,7 +5,7 @@ services:
     image: jnovack/autossh
     environment:
       - SSH_REMOTE_USER=frog
-      - SSH_REMOTE_HOST=2a01:4f9:3b:3e66::15:65
+      - SSH_REMOTE_HOST={{ hostvars['frog'].ansible_host }}
       - SSH_REMOTE_PORT=22
       - SSH_TUNNEL_PORT=8443
       - SSH_TARGET_HOST=localhost
@@ -20,7 +20,7 @@ services:
     image: jnovack/autossh
     environment:
       - SSH_REMOTE_USER=frog
-      - SSH_REMOTE_HOST=2a01:4f9:3b:3e66::15:65
+      - SSH_REMOTE_HOST={{ hostvars['frog'].ansible_host }}
       - SSH_REMOTE_PORT=22
       - SSH_TUNNEL_PORT=8080
       - SSH_TARGET_HOST=localhost

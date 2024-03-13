@@ -2,11 +2,11 @@
   hosts: homelab
   become: true
 
-  # roles:
-  #   - role: robertdebock.cups
-  #     vars:
-  #       cups_listen: "0.0.0.0:631"
-  #       cups_browsing: "On"
+  roles:
+    - role: robertdebock.cups
+      vars:
+        cups_listen: "0.0.0.0:631"
+        cups_browsing: "On"
 
   vars:
     compose_files:
@@ -17,55 +17,55 @@
       - docker-compose.zigbee2mqtt.yml
 
   tasks:
-    # - name: Add local public key
-    #   ansible.builtin.authorized_key:
-    #     user: pi
-    #     state: present
-    #     key: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"
+    - name: Add local public key
+      ansible.builtin.authorized_key:
+        user: pi
+        state: present
+        key: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"
 
-    # - name: Set hostname
-    #   ansible.builtin.hostname:
-    #     name: "{{ inventory_hostname }}"
+    - name: Set hostname
+      ansible.builtin.hostname:
+        name: "{{ inventory_hostname }}"
 
-    # - name: Generate SSH keypair
-    #   community.crypto.openssh_keypair:
-    #     type: ed25519
-    #     path: /home/pi/.ssh/id_ed25519
-    #   register: id_ed25519
+    - name: Generate SSH keypair
+      community.crypto.openssh_keypair:
+        type: ed25519
+        path: /home/pi/.ssh/id_ed25519
+      register: id_ed25519
 
-    # - name: Set hostname
-    #   ansible.builtin.authorized_key:
-    #     user: pi
-    #     state: present
-    #     key: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"
+    - name: Set hostname
+      ansible.builtin.authorized_key:
+        user: pi
+        state: present
+        key: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"
 
-    # - name: Install Docker & Related Packages
-    #   ansible.builtin.apt:
-    #     name: "{{ packages }}"
-    #     update_cache: true
-    #   vars:
-    #     packages:
-    #       - docker.io
-    #       - containerd
-    #       - virtualenv
-    #       - docker-compose
-    #       - python3-pip
-    #       - python3-setuptools
-    #       - python3-docker
+    - name: Install Docker & Related Packages
+      ansible.builtin.apt:
+        name: "{{ packages }}"
+        update_cache: true
+      vars:
+        packages:
+          - docker.io
+          - containerd
+          - virtualenv
+          - docker-compose
+          - python3-pip
+          - python3-setuptools
+          - python3-docker
 
-    # - name: Add user to docker group
-    #   become: true
-    #   ansible.builtin.user:
-    #     name: "{{ ansible_user }}"
-    #     groups: docker
-    #     append: true
+    - name: Add user to docker group
+      become: true
+      ansible.builtin.user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: true
 
-    # - name: Enable & Start Docker service
-    #   become: true
-    #   ansible.builtin.service:
-    #     name: docker
-    #     enabled: true
-    #     state: started
+    - name: Enable & Start Docker service
+      become: true
+      ansible.builtin.service:
+        name: docker
+        enabled: true
+        state: started
 
     - name: Create tmp directory
       ansible.builtin.tempfile:
@@ -74,7 +74,7 @@
       register: tmp
 
     - name: Copy deploy config to temp
-      ansible.builtin.copy:
+      ansible.builtin.template:
         src: "{{ item }}"
         dest: "{{ tmp.path }}"
         mode: 0644
@@ -115,7 +115,6 @@
         pull: true
         recreate: always
 
-#
 # TODO: SAMBA
 
 - name: Setup FROG
