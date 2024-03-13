@@ -1,0 +1,7 @@
+---
+roles:
+  - robertdebock.cups
+collections:
+  - community.docker
+  - community.crypto
+  - community.general

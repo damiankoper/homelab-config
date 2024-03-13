@@ -1,0 +1,160 @@
+- name: Setup homelab
+  hosts: homelab
+  become: true
+
+  # roles:
+  #   - role: robertdebock.cups
+  #     vars:
+  #       cups_listen: "0.0.0.0:631"
+  #       cups_browsing: "On"
+
+  vars:
+    compose_files:
+      - docker-compose.actual.yml
+      - docker-compose.autossh.yml
+      - docker-compose.swag.yml
+      - docker-compose.homeassistant.yml
+      - docker-compose.zigbee2mqtt.yml
+
+  tasks:
+    # - name: Add local public key
+    #   ansible.builtin.authorized_key:
+    #     user: pi
+    #     state: present
+    #     key: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"
+
+    # - name: Set hostname
+    #   ansible.builtin.hostname:
+    #     name: "{{ inventory_hostname }}"
+
+    # - name: Generate SSH keypair
+    #   community.crypto.openssh_keypair:
+    #     type: ed25519
+    #     path: /home/pi/.ssh/id_ed25519
+    #   register: id_ed25519
+
+    # - name: Set hostname
+    #   ansible.builtin.authorized_key:
+    #     user: pi
+    #     state: present
+    #     key: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"
+
+    # - name: Install Docker & Related Packages
+    #   ansible.builtin.apt:
+    #     name: "{{ packages }}"
+    #     update_cache: true
+    #   vars:
+    #     packages:
+    #       - docker.io
+    #       - containerd
+    #       - virtualenv
+    #       - docker-compose
+    #       - python3-pip
+    #       - python3-setuptools
+    #       - python3-docker
+
+    # - name: Add user to docker group
+    #   become: true
+    #   ansible.builtin.user:
+    #     name: "{{ ansible_user }}"
+    #     groups: docker
+    #     append: true
+
+    # - name: Enable & Start Docker service
+    #   become: true
+    #   ansible.builtin.service:
+    #     name: docker
+    #     enabled: true
+    #     state: started
+
+    - name: Create tmp directory
+      ansible.builtin.tempfile:
+        state: directory
+        suffix: ansible
+      register: tmp
+
+    - name: Copy deploy config to temp
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: "{{ tmp.path }}"
+        mode: 0644
+      with_items: "{{ compose_files }}"
+      register: tmp_compose_files
+
+    - name: Create and start docker compose services
+      community.docker.docker_compose:
+        project_src: .
+        project_name: homelab
+        files: "{{ tmp_compose_files.results | map(attribute='dest') }}"
+        build: true
+        stopped: true
+
+    - name: Copy subdomain config
+      ansible.builtin.copy:
+        src: "proxy-confs/"
+        dest: "/var/lib/docker/volumes/homelab_swag_config/_data/nginx/proxy-confs/"
+        mode: 0644
+
+    - name: Copy homeassistant config
+      ansible.builtin.copy:
+        src: "homeassistant-config/"
+        dest: "/var/lib/docker/volumes/homelab_homeassistant_config/_data/"
+        mode: 0644
+
+    - name: Copy zigbee2mqtt config
+      ansible.builtin.copy:
+        src: "zigbee2mqtt-data/"
+        dest: "/var/lib/docker/volumes/homelab_zigbee2mqtt_data/_data/"
+        mode: 0644
+
+    - name: Restart docker compose services
+      community.docker.docker_compose:
+        project_src: .
+        project_name: homelab
+        files: "{{ tmp_compose_files.results | map(attribute='dest') }}"
+        pull: true
+        recreate: always
+
+#
+# TODO: SAMBA
+
+- name: Setup FROG
+  hosts: frog
+  become: true
+
+  tasks:
+    - name: Add homelab public key
+      ansible.builtin.authorized_key:
+        user: frog
+        state: present
+        key: "{{ hostvars['homelab'].id_ed25519.public_key }}"
+
+    - name: Forward port 443 to 8443
+      ansible.builtin.iptables:
+        table: nat
+        chain: PREROUTING
+        protocol: tcp
+        destination_port: "443"
+        jump: REDIRECT
+        to_ports: "8443"
+        ip_version: ipv6
+        comment: Redirect HTTPS traffic to port 8443
+
+    - name: Forward port 80 to 8080
+      ansible.builtin.iptables:
+        table: nat
+        chain: PREROUTING
+        protocol: tcp
+        destination_port: "80"
+        jump: REDIRECT
+        to_ports: "8080"
+        ip_version: ipv6
+        comment: Redirect HTTPS traffic to port 8080
+
+    - name: Set ip6tables on boot
+      ansible.builtin.command: rc-update add ip6tables
+      changed_when: true
+
+    - name: Save ip6tables
+      ansible.builtin.command: rc-service ip6tables save
+      changed_when: true
