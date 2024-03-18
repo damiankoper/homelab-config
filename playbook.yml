@@ -89,11 +89,6 @@
         files: "{{ tmp_compose_files.results | map(attribute='dest') }}"
         build: true
         stopped: true
-      environment:
-        AP_API_KEY: "{{ ap_api_key }}"
-        AP_ENCRYPTION_KEY: "{{ ap_encription_key }}"
-        AP_JWT_SECRET: "{{ ap_jwt_secret }}"
-        AP_POSTGRES_PASSWORD: "{{ ap_postgres_password }}"
 
     - name: Copy subdomain config
       ansible.builtin.copy:
@@ -118,11 +113,6 @@
         project_src: .
         project_name: homelab
         files: "{{ tmp_compose_files.results | map(attribute='dest') }}"
-      environment:
-        AP_API_KEY: "{{ ap_api_key }}"
-        AP_ENCRYPTION_KEY: "{{ ap_encription_key }}"
-        AP_JWT_SECRET: "{{ ap_jwt_secret }}"
-        AP_POSTGRES_PASSWORD: "{{ ap_postgres_password }}"
 
 # TODO: SAMBA
 
