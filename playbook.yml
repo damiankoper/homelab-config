@@ -10,7 +10,7 @@
 
   vars:
     compose_files:
-      - docker-compose.activepieces.yml
+      - docker-compose.n8n.yml
       - docker-compose.actual.yml
       - docker-compose.autossh.yml
       - docker-compose.swag.yml

@@ -1,0 +1,14 @@
+version: "3"
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    restart: unless-stopped
+    environment:
+      GENERIC_TIMEZONE: Europe/Warsaw
+      TZ: Europe/Warsaw
+      WEBHOOK_URL: https://n8n.damiankoper.dev/
+    volumes:
+      - "n8n_data:/home/node/.n8n"
+
+volumes:
+  n8n_data:

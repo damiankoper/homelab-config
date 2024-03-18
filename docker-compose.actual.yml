@@ -3,8 +3,6 @@ version: "3"
 services:
   actual:
     image: docker.io/actualbudget/actual-server:latest
-    ports:
-      - "5006:5006"
     volumes:
       - actual_data:/data
     restart: unless-stopped

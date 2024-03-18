@@ -32,7 +32,12 @@ inputFilePaths.forEach(processFile);
 
 function processFile(path: string) {
   const fileBinary = fs.readFileSync(path, { encoding: "binary" });
-  const file = decode(fileBinary) as string;
+  const { csv, filename } = processContent(fileBinary);
+  fs.writeFileSync(`${argv.outputDir}/${filename}.csv`, csv);
+}
+
+function processContent(content: string): { filename: string; csv: string } {
+  const file = decode(content) as string;
   const parts = file.replaceAll("\r", "").split("\n");
 
   const interval = parts[14].split(";");
@@ -44,7 +49,7 @@ function processFile(path: string) {
   const currency = parts[18].split(";")[0].replaceAll(" ", "_");
   const lastIBAN = parts[20].split(";")[0].replaceAll(" ", "").trim().slice(-4);
 
-  const resultFile = `${fullName}_${accountName}_${lastIBAN}_${currency}_${from}_${to}`;
+  const filename = `${fullName}_${accountName}_${lastIBAN}_${currency}_${from}_${to}`;
 
   const csv = parts.slice(38, -5).join("\n");
   const parsed = Papa.parse<string[]>(csv, { delimiter: ";", header: false });
@@ -53,7 +58,7 @@ function processFile(path: string) {
 
   const csvSerialized = Papa.unparse(mapped);
 
-  fs.writeFileSync(`${argv.outputDir}/${resultFile}.csv`, csvSerialized);
+  return { filename, csv: csvSerialized };
 }
 
 function processRecord(record: string[]): Record<string, string> {

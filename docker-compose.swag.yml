@@ -9,7 +9,7 @@ services:
       - PGID=1000
       - TZ=Europe/Warsaw
       - URL=damiankoper.dev
-      - SUBDOMAINS=ha,actual,ap,
+      - SUBDOMAINS=ha,actual,n8n
       - VALIDATION=http
       - EMAIL=kopernickk@gmail.com #optional
       - ONLY_SUBDOMAINS=true #optional
