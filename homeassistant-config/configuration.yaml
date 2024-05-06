@@ -1,0 +1,45 @@
+# Loads default set of integrations. Do not remove.
+default_config:
+
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+   - 127.0.0.1
+   - 172.23.0.0/24
+
+lovelace:
+  mode: storage
+
+alarm_control_panel:
+  - platform: manual
+
+binary_sensor:
+  - platform: impk
+    monitored_conditions:
+      - news
+sensor:
+  - platform: impk
+    stops:
+      - id: {{ hostvars['homelab'].ha_mpk_stop_1 }}
+      - id: {{ hostvars['homelab'].ha_mpk_stop_2 }}
+  - platform: template
+    sensors:
+      nightstate:
+        friendly_name: Night State
+        value_template: "{% raw %}{% if is_state('sun.sun', 'below_horizon') %}1{% else %}0{% endif %} {% endraw %}"
+        
+rest:
+  resource: "https://v2.jokeapi.dev/joke/Any"
+  scan_interval: 10
+  sensor:
+    - name: joke
+      unique_id: joke
+      value_template: "{% raw %}{{ value_json['joke'] }} {{ value_json['setup'] }} {{ value_json['delivery'] }}{% endraw %}"

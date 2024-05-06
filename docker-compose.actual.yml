@@ -1,0 +1,28 @@
+version: "3"
+
+services:
+  actual:
+    image: docker.io/actualbudget/actual-server:latest
+    volumes:
+      - actual_data:/data
+    restart: unless-stopped
+
+  mbank_parser:
+    image: kopernick/homelab-mbank-parser:latest
+    command: npm run start:server
+    restart: unless-stopped
+    environment:
+      - PORT= 80
+
+  actual_importer:
+    image: kopernick/homelab-actual-importer:latest
+    command: npm run start
+    environment:
+      - PORT= 80
+      - SERVER_URL=http://actual:5006
+      - BUDGET_SYNC_ID={{ actual_importer_budget_sync_id }}
+      - SERVER_PASSWORD={{ actual_importer_server_password }}
+    restart: unless-stopped
+
+volumes:
+  actual_data:

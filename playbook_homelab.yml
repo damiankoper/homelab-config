@@ -1,0 +1,128 @@
+- name: Build dependencies
+  hosts: localhost
+  tasks:
+    - name: Log into DockerHub
+      community.docker.docker_login:
+        username: "{{ dockerhub_user }}"
+        password: "{{ dockerhub_token }}"
+
+    - name: Build and push docker
+      shell: |
+        docker buildx create --platform "linux/arm64,linux/amd64" --name builder ; \
+        docker buildx use builder ; \
+        docker buildx inspect --bootstrap ; \
+        docker buildx build --platform linux/arm64,linux/amd64 --push -t kopernick/homelab-mbank-parser:latest mbank-parser
+        docker buildx build --platform linux/arm64,linux/amd64 --push -t kopernick/homelab-actual-importer:latest actual-importer
+      changed_when: true
+
+    - name: Logout of DockerHub
+      community.docker.docker_login:
+        state: absent
+
+- name: Setup homelab
+  hosts: homelab
+  become: true
+
+  roles:
+    - role: robertdebock.cups
+      vars:
+        cups_listen: "0.0.0.0:631"
+        cups_browsing: "On"
+    - role: geerlingguy.docker
+      vars:
+        docker_install_compose_plugin: true
+        docker_users:
+          - "{{ ansible_user }}"
+
+  vars:
+    compose_files:
+      - docker-compose.n8n.yml
+      - docker-compose.actual.yml
+      - docker-compose.autossh.yml
+      - docker-compose.swag.yml
+      - docker-compose.homeassistant.yml
+      - docker-compose.zigbee2mqtt.yml
+      - docker-compose.syncthing.yml
+      - docker-compose.pihole.yml
+
+  tasks:
+    - name: Add local public key
+      ansible.builtin.authorized_key:
+        user: pi
+        state: present
+        key: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"
+
+    - name: Set hostname
+      ansible.builtin.hostname:
+        name: "{{ inventory_hostname }}"
+
+    - name: Generate SSH keypair
+      community.crypto.openssh_keypair:
+        type: ed25519
+        path: /home/pi/.ssh/id_ed25519
+      register: id_ed25519
+
+    - name: Set hostname
+      ansible.builtin.authorized_key:
+        user: pi
+        state: present
+        key: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"
+
+    - name: Mount up device by UUID
+      ansible.posix.mount:
+        path: /mnt/homelab_seagate
+        src: UUID=EED246E6D246B29F
+        fstype: ntfs
+        opts: defaults,auto,users,rw,nofail,noatime,uid=1000,gid=1000
+        backup: true
+        state: mounted
+
+    - name: Create tmp directory
+      ansible.builtin.tempfile:
+        state: directory
+        suffix: ansible
+      register: tmp
+
+    - name: Copy deploy config to temp
+      ansible.builtin.template:
+        src: "{{ item }}"
+        dest: "{{ tmp.path }}"
+        mode: 0644
+      with_items: "{{ compose_files }}"
+      register: tmp_compose_files
+
+    - name: Create and start docker compose services
+      community.docker.docker_compose_v2:
+        project_src: .
+        project_name: homelab
+        files: "{{ tmp_compose_files.results | map(attribute='dest') }}"
+        build: never
+        state: present
+
+    - name: Copy subdomain config
+      ansible.builtin.copy:
+        src: "proxy-confs/"
+        dest: "/var/lib/docker/volumes/homelab_swag_config/_data/nginx/proxy-confs/"
+        mode: 0644
+
+    - name: Copy homeassistant config
+      ansible.builtin.template:
+        src: "{{ item }}"
+        dest: "/var/lib/docker/volumes/homelab_homeassistant_config/_data/{{ item | regex_replace(playbook_dir + '/homeassistant-config/', '') }}"
+        mode: 0644
+      with_fileglob:
+        - "{{ playbook_dir }}/homeassistant-config/*"
+
+    - name: Copy zigbee2mqtt config
+      ansible.builtin.copy:
+        src: "zigbee2mqtt-data/"
+        dest: "/var/lib/docker/volumes/homelab_zigbee2mqtt_data/_data/"
+        mode: 0644
+
+    - name: Restart docker compose services
+      community.docker.docker_compose_v2:
+        project_src: .
+        project_name: homelab
+        files: "{{ tmp_compose_files.results | map(attribute='dest') }}"
+        build: never
+        state: restarted

@@ -1,0 +1,29 @@
+{
+  "name": "mbank-parser",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start:files": "jiti src/files.ts",
+    "start:dev:server": "listhen -w --open src/server.ts",
+    "start:server": "listhen src/server.ts"
+  },
+  "type": "module",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/luxon": "^3.4.2",
+    "@types/node": "^20.11.25",
+    "@types/papaparse": "^5.3.14",
+    "@types/yargs": "^17.0.32",
+    "glob": "^10.3.10",
+    "h3": "^1.11.1",
+    "jiti": "^1.21.0",
+    "listhen": "^1.7.2",
+    "luxon": "^3.4.4",
+    "papaparse": "^5.4.1",
+    "typescript": "^5.4.2",
+    "windows-1250": "^3.0.4",
+    "yargs": "^17.7.2"
+  }
+}

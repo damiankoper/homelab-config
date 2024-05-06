@@ -1,0 +1,8 @@
+---
+roles:
+  - robertdebock.cups
+  - geerlingguy.docker
+collections:
+  - community.docker
+  - community.crypto
+  - community.general

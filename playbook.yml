@@ -1,0 +1,5 @@
+- name: Setup Homelab
+  ansible.builtin.import_playbook: playbook_homelab.yml
+
+- name: Setup FROG
+  ansible.builtin.import_playbook: playbook_frog.yml

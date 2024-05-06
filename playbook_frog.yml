@@ -1,0 +1,40 @@
+- name: Setup FROG
+  hosts: frog
+  become: true
+
+  tasks:
+    - name: Add homelab public key
+      ansible.builtin.authorized_key:
+        user: frog
+        state: present
+        key: "{{ hostvars['homelab'].id_ed25519.public_key }}"
+
+    - name: Forward port 443 to 8443
+      ansible.builtin.iptables:
+        table: nat
+        chain: PREROUTING
+        protocol: tcp
+        destination_port: "443"
+        jump: REDIRECT
+        to_ports: "8443"
+        ip_version: ipv6
+        comment: Redirect HTTPS traffic to port 8443
+
+    - name: Forward port 80 to 8080
+      ansible.builtin.iptables:
+        table: nat
+        chain: PREROUTING
+        protocol: tcp
+        destination_port: "80"
+        jump: REDIRECT
+        to_ports: "8080"
+        ip_version: ipv6
+        comment: Redirect HTTPS traffic to port 8080
+
+    - name: Set ip6tables on boot
+      ansible.builtin.command: rc-update add ip6tables
+      changed_when: true
+
+    - name: Save ip6tables
+      ansible.builtin.command: rc-service ip6tables save
+      changed_when: true

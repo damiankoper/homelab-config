@@ -1,0 +1,21 @@
+{
+  "name": "actual-importer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start:dev": "listhen -w --open src/server.ts",
+    "start": "listhen src/server.ts"
+  },
+  "type": "module",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@actual-app/api": "^6.6.0",
+    "@types/node": "^20.11.25",
+    "h3": "^1.11.1",
+    "listhen": "^1.7.2",
+    "typescript": "^5.4.2",
+    "zod": "^3.22.4"
+  }
+}
