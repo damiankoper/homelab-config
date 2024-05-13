@@ -1,5 +1,3 @@
-version: "3"
-
 services:
   autossh_https_to_frog:
     image: jnovack/autossh

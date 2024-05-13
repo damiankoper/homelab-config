@@ -1,0 +1,20 @@
+services:
+  samba:
+    image: ghcr.io/servercontainers/samba
+    restart: unless-stopped
+    network_mode: host
+    cap_add:
+      - CAP_NET_ADMIN
+    environment:
+      MODEL: TimeCapsule
+      AVAHI_NAME: Homelab
+
+      ACCOUNT_homelab: {{ samba_password }}
+      UID_homelab: 1000
+
+      SAMBA_VOLUME_CONFIG_homelab: "[Homelab Share]; path=/shares/homelab; valid users = homelab; guest ok = no; read only = no; browseable = yes"
+
+    volumes:
+      - /etc/avahi/services/:/external/avahi
+
+      - /mnt/homelab_seagate/homelab:/shares/homelab

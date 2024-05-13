@@ -44,6 +44,8 @@
       - docker-compose.zigbee2mqtt.yml
       - docker-compose.syncthing.yml
       - docker-compose.pihole.yml
+      - docker-compose.immich.yml
+      - docker-compose.samba.yml
 
   tasks:
     - name: Add local public key
@@ -125,4 +127,6 @@
         project_name: homelab
         files: "{{ tmp_compose_files.results | map(attribute='dest') }}"
         build: never
-        state: restarted
+        pull: always
+        recreate: always
+        state: present

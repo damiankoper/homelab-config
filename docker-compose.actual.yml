@@ -1,5 +1,3 @@
-version: "3"
-
 services:
   actual:
     image: docker.io/actualbudget/actual-server:latest
