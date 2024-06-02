@@ -1,26 +1,47 @@
 services:
   actual:
     image: docker.io/actualbudget/actual-server:latest
+    restart: unless-stopped
+    deploy:
+      placement:
+        constraints:
+          - "node.hostname==homelab-bravo"
     volumes:
       - actual_data:/data
-    restart: unless-stopped
+    networks:
+      - bridge
+      - overlay
 
   mbank_parser:
     image: kopernick/homelab-mbank-parser:latest
     command: npm run start:server
     restart: unless-stopped
+    deploy:
+      placement:
+        constraints:
+          - "node.hostname==homelab-bravo"
     environment:
       - PORT=80
+    networks:
+      - bridge
+      - overlay
 
   actual_importer:
     image: kopernick/homelab-actual-importer:latest
     command: npm run start
+    restart: unless-stopped
+    deploy:
+      placement:
+        constraints:
+          - "node.hostname==homelab-bravo"
     environment:
       - PORT=80
-      - SERVER_URL=http://actual:5006
+      - SERVER_URL=http://homelab_actual:5006
       - BUDGET_SYNC_ID={{ actual_importer_budget_sync_id }}
       - SERVER_PASSWORD={{ actual_importer_server_password }}
-    restart: unless-stopped
+    networks:
+      - bridge
+      - overlay
 
 volumes:
   actual_data:

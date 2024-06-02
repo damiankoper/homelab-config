@@ -1,0 +1,10 @@
+networks:
+  outside:
+    external:
+      name: "host"
+  bridge:
+    external:
+      name: "bridge"
+  overlay:
+    driver: "overlay"
+    attachable: true

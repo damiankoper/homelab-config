@@ -1,3 +1,5 @@
+################## BUILD ###########################
+
 - name: Build dependencies
   hosts: localhost
   tasks:
@@ -11,52 +13,39 @@
         docker buildx create --platform "linux/arm64,linux/amd64" --name builder ; \
         docker buildx use builder ; \
         docker buildx inspect --bootstrap ; \
-        docker buildx build --platform linux/arm64,linux/amd64 --push -t kopernick/homelab-mbank-parser:latest mbank-parser
-        docker buildx build --platform linux/arm64,linux/amd64 --push -t kopernick/homelab-actual-importer:latest actual-importer
+        docker buildx build --platform linux/arm64,linux/amd64 --push -t kopernick/homelab-mbank-parser:latest services/mbank-parser
+        docker buildx build --platform linux/arm64,linux/amd64 --push -t kopernick/homelab-actual-importer:latest services/actual-importer
       changed_when: true
 
     - name: Logout of DockerHub
       community.docker.docker_login:
         state: absent
 
-- name: Setup homelab
-  hosts: homelab
+################## HOMELAB COMMON ##################
+
+- name: Setup homelab common
+  hosts:
+    - homelab-alfa
+    - homelab-bravo
   become: true
 
   roles:
-    - role: robertdebock.cups
-      vars:
-        cups_listen: "0.0.0.0:631"
-        cups_browsing: "On"
     - role: geerlingguy.docker
       vars:
         docker_install_compose_plugin: true
         docker_users:
           - "{{ ansible_user }}"
 
-  vars:
-    compose_files:
-      - docker-compose.n8n.yml
-      - docker-compose.actual.yml
-      - docker-compose.autossh.yml
-      - docker-compose.swag.yml
-      - docker-compose.homeassistant.yml
-      - docker-compose.zigbee2mqtt.yml
-      - docker-compose.syncthing.yml
-      - docker-compose.pihole.yml
-      - docker-compose.immich.yml
-      - docker-compose.samba.yml
-
   tasks:
+    - name: Set hostname
+      ansible.builtin.hostname:
+        name: "{{ inventory_hostname }}"
+
     - name: Add local public key
       ansible.builtin.authorized_key:
         user: pi
         state: present
         key: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"
-
-    - name: Set hostname
-      ansible.builtin.hostname:
-        name: "{{ inventory_hostname }}"
 
     - name: Generate SSH keypair
       community.crypto.openssh_keypair:
@@ -64,12 +53,43 @@
         path: /home/pi/.ssh/id_ed25519
       register: id_ed25519
 
-    - name: Set hostname
-      ansible.builtin.authorized_key:
-        user: pi
+    - name: Install required system packages
+      ansible.builtin.apt:
+        pkg:
+          - python3-pip
+          - virtualenv
+          - python3-setuptools
         state: present
-        key: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"
+        update_cache: true
 
+    - name: Install python packages
+      ansible.builtin.pip:
+        name:
+          - docker
+          - jsondiff
+          - pyyaml
+      environment:
+        PIP_BREAK_SYSTEM_PACKAGES: 1
+
+################## HOMELAB ALFA ##################
+
+- name: Setup homelab-alfa
+  hosts: homelab-alfa
+  become: true
+
+  vars:
+    compose_files:
+      - docker/common.docker-compose.yml
+      - docker/n8n.docker-compose.yml
+      - docker/actual.docker-compose.yml
+      - docker/autossh.docker-compose.yml
+      - docker/proxy.docker-compose.yml
+      - docker/pihole.docker-compose.yml
+      - docker/syncthing.docker-compose.yml
+      - docker/samba.docker-compose.yml
+      - docker/immich.docker-compose.yml
+
+  tasks:
     - name: Mount up device by UUID
       ansible.posix.mount:
         path: /mnt/homelab_seagate
@@ -78,6 +98,76 @@
         opts: defaults,auto,users,rw,nofail,noatime,uid=1000,gid=1000
         backup: true
         state: mounted
+
+    - name: Init a new swarm manager with default parameters
+      community.docker.docker_swarm:
+        state: present
+        advertise_addr: "{{ ansible_host }}"
+      register: swarm_manager
+
+    - name: "Add Swarm Token to dummy host"
+      ansible.builtin.add_host:
+        name: "SWARM_TOKEN_HOLDER"
+        remote_addr: "{{ ansible_host }}"
+        worker: "{{ swarm_manager.swarm_facts.JoinTokens.Worker }}"
+        manager: "{{ swarm_manager.swarm_facts.JoinTokens.Manager }}"
+
+    - name: Create tmp directory
+      ansible.builtin.tempfile:
+        state: directory
+        suffix: ansible
+      register: tmp
+
+    - name: Copy deploy config to temp
+      ansible.builtin.template:
+        src: "{{ item }}"
+        dest: "{{ tmp.path }}"
+        mode: 0644
+      with_items: "{{ compose_files }}"
+      register: tmp_compose_files
+
+    - name: Deploy homelab stack
+      community.docker.docker_stack:
+        state: present
+        name: homelab
+        compose: "{{ tmp_compose_files.results | map(attribute='dest') }}"
+
+################## HOMELAB BRAVO ##################
+
+- name: Setup homelab-bravo
+  hosts: homelab-bravo
+  become: true
+
+  roles:
+    - role: robertdebock.cups
+      vars:
+        cups_listen: "0.0.0.0:631"
+        cups_browsing: "On"
+
+  vars:
+    compose_files:
+      - docker/homeassistant.docker-compose.yml
+
+  tasks:
+    - name: Join swarm as worker
+      community.docker.docker_swarm:
+        state: join
+        remote_addrs: "{{ hostvars.SWARM_TOKEN_HOLDER.remote_addr }}"
+        join_token: "{{ hostvars.SWARM_TOKEN_HOLDER.worker }}"
+
+    - name: Copy homeassistant config
+      ansible.builtin.template:
+        src: "{{ item }}"
+        dest: "/var/lib/docker/volumes/homelab_homeassistant_config/_data/{{ item | regex_replace(playbook_dir + '/configs/homeassistant/', '') }}"
+        mode: 0644
+      with_fileglob:
+        - "{{ playbook_dir }}/homeassistant-config/*"
+
+    - name: Copy zigbee2mqtt config
+      ansible.builtin.copy:
+        src: "configs/zigbee2mqtt/"
+        dest: "/var/lib/docker/volumes/homelab_zigbee2mqtt_data/_data/"
+        mode: 0644
 
     - name: Create tmp directory
       ansible.builtin.tempfile:
@@ -99,34 +189,4 @@
         project_name: homelab
         files: "{{ tmp_compose_files.results | map(attribute='dest') }}"
         build: never
-        state: present
-
-    - name: Copy subdomain config
-      ansible.builtin.copy:
-        src: "proxy-confs/"
-        dest: "/var/lib/docker/volumes/homelab_swag_config/_data/nginx/proxy-confs/"
-        mode: 0644
-
-    - name: Copy homeassistant config
-      ansible.builtin.template:
-        src: "{{ item }}"
-        dest: "/var/lib/docker/volumes/homelab_homeassistant_config/_data/{{ item | regex_replace(playbook_dir + '/homeassistant-config/', '') }}"
-        mode: 0644
-      with_fileglob:
-        - "{{ playbook_dir }}/homeassistant-config/*"
-
-    - name: Copy zigbee2mqtt config
-      ansible.builtin.copy:
-        src: "zigbee2mqtt-data/"
-        dest: "/var/lib/docker/volumes/homelab_zigbee2mqtt_data/_data/"
-        mode: 0644
-
-    - name: Restart docker compose services
-      community.docker.docker_compose_v2:
-        project_src: .
-        project_name: homelab
-        files: "{{ tmp_compose_files.results | map(attribute='dest') }}"
-        build: never
-        pull: always
-        recreate: always
         state: present

@@ -14,6 +14,7 @@ http:
   trusted_proxies:
    - 127.0.0.1
    - 172.23.0.0/24
+   - 192.168.0.0/24
 
 lovelace:
   mode: storage
@@ -28,8 +29,8 @@ binary_sensor:
 sensor:
   - platform: impk
     stops:
-      - id: {{ hostvars['homelab'].ha_mpk_stop_1 }}
-      - id: {{ hostvars['homelab'].ha_mpk_stop_2 }}
+      - id: {{ hostvars['homelab-bravo'].ha_mpk_stop_1 }}
+      - id: {{ hostvars['homelab-bravo'].ha_mpk_stop_2 }}
   - platform: template
     sensors:
       nightstate:

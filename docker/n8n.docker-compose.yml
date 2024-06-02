@@ -2,12 +2,19 @@ services:
   n8n:
     image: docker.n8n.io/n8nio/n8n
     restart: unless-stopped
+    deploy:
+      placement:
+        constraints:
+          - "node.hostname==homelab-bravo"
     environment:
       GENERIC_TIMEZONE: Europe/Warsaw
       TZ: Europe/Warsaw
       WEBHOOK_URL: https://n8n.damiankoper.dev/
     volumes:
       - "n8n_data:/home/node/.n8n"
+    networks:
+      - overlay
+      - bridge
 
 volumes:
   n8n_data:

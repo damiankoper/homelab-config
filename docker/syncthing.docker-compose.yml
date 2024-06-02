@@ -1,0 +1,21 @@
+services:
+  syncthing:
+    image: lscr.io/linuxserver/syncthing:latest
+    restart: unless-stopped
+    deploy:
+      placement:
+        constraints:
+          - "node.hostname==homelab-alfa"
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: "Europe/Warsaw"
+    ports:
+      - "22000:22000/tcp"
+      - "22000:22000/udp"
+    volumes:
+      - "/mnt/homelab_seagate/homelab/syncthing_config:/config"
+      - "/mnt/homelab_seagate/homelab/syncthing_data:/data"
+    networks:
+      - overlay
+      - bridge

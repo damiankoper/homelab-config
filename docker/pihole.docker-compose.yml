@@ -1,6 +1,11 @@
 services:
   pihole:
     image: pihole/pihole:latest
+    restart: unless-stopped
+    deploy:
+      placement:
+        constraints:
+          - "node.hostname==homelab-bravo"
     ports:
       - "53:53/tcp"
       - "53:53/udp"
@@ -11,7 +16,8 @@ services:
     volumes:
       - pihole_etc:/etc/pihole
       - pihole_etc_dnsmasq:/etc/dnsmasq.d
-    restart: unless-stopped
+    networks:
+      - bridge
 
 volumes:
   pihole_etc:

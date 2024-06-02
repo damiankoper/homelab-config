@@ -1,6 +1,11 @@
 services:
   immich:
     image: ghcr.io/imagegenius/immich:latest
+    restart: unless-stopped
+    deploy:
+      placement:
+        constraints:
+          - "node.hostname==homelab-alfa"
     environment:
       - PUID=1000
       - PGID=1000
@@ -17,25 +22,38 @@ services:
       - MACHINE_LEARNING_WORKERS=1 #optional
       - MACHINE_LEARNING_WORKER_TIMEOUT=120 #optional
     volumes:
-      - immich_appdata:/config
-      - /mnt/homelab_seagate/homelab/immich:/photos
+      - /mnt/homelab_seagate/homelab/immich_appdata:/config
+      - /mnt/homelab_seagate/homelab/immich_photos:/photos
       - /mnt/homelab_seagate/homelab/immich_import:/import:ro #optional
-    restart: unless-stopped
+    networks:
+      - overlay
+      - bridge
 
   redis:
     image: redis
     restart: unless-stopped
+    deploy:
+      placement:
+        constraints:
+          - "node.hostname==homelab-alfa"
+    networks:
+      - overlay
 
   postgres:
     image: tensorchord/pgvecto-rs:pg14-v0.2.0
+    restart: unless-stopped
+    deploy:
+      placement:
+        constraints:
+          - "node.hostname==homelab-alfa"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD={{ immich_db_password }}
       - POSTGRES_DB=immich
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
+    networks:
+      - overlay
 
 volumes:
-  immich_appdata:
   postgres_data:

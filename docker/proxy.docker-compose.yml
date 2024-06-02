@@ -1,0 +1,22 @@
+services:
+  nginx-proxy-manager:
+    image: "jc21/nginx-proxy-manager:latest"
+    restart: unless-stopped
+    deploy:
+      placement:
+        constraints:
+          - "node.hostname==homelab-alfa"
+    ports:
+      - "8080:80"
+      - "8443:443"
+      - "8081:81"
+    volumes:
+      - nginx-proxy-manager_data:/data
+      - nginx-proxy-manager_letsencrypt:/etc/letsencrypt
+    networks:
+      - overlay
+      - bridge
+
+volumes:
+  nginx-proxy-manager_data:
+  nginx-proxy-manager_letsencrypt:

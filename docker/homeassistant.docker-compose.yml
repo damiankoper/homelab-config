@@ -1,0 +1,39 @@
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+    environment:
+      - TZ=Europe/Warsaw
+    volumes:
+      - homeassistant_config:/config
+      - /run/dbus:/run/dbus:ro
+
+  mqtt:
+    image: eclipse-mosquitto:2.0
+    command: "mosquitto -c /mosquitto-no-auth.conf"
+    restart: unless-stopped
+    volumes:
+      - mosquitto_data:/mosquitto
+    ports:
+      - 1883:1883
+      - 9001:9001
+
+  zigbee2mqtt:
+    image: koenkk/zigbee2mqtt
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/Warsaw
+    ports:
+      - 8124:8080
+    volumes:
+      - zigbee2mqtt_data:/app/data
+      - /run/udev:/run/udev:ro
+    devices:
+      - /dev/ttyUSB0
+
+volumes:
+  homeassistant_config:
+  mosquitto_data:
+  zigbee2mqtt_data:

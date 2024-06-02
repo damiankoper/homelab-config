@@ -7,7 +7,7 @@
       ansible.builtin.authorized_key:
         user: frog
         state: present
-        key: "{{ hostvars['homelab'].id_ed25519.public_key }}"
+        key: "{{ hostvars['homelab-alfa'].id_ed25519.public_key }}"
 
     - name: Forward port 443 to 8443
       ansible.builtin.iptables:
