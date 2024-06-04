@@ -88,8 +88,19 @@
       - docker/syncthing.docker-compose.yml
       - docker/samba.docker-compose.yml
       - docker/immich.docker-compose.yml
+      - docker/uptime.docker-compose.yml
 
   tasks:
+    - name: Configure PCIe
+      ansible.builtin.lineinfile:
+        path: /boot/firmware/config.txt
+        regexp: "^{{ item }}$"
+        insertafter: "^\\[all\\]"
+        line: "{{ item }}"
+      with_items:
+        - dtparam=pciex1_gen=3
+        - dtparam=pciex1
+
     - name: Mount up device by UUID
       ansible.posix.mount:
         path: /mnt/homelab_seagate

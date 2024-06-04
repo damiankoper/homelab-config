@@ -1,0 +1,16 @@
+services:
+  uptime-kuma:
+    image: "louislam/uptime-kuma:latest"
+    restart: unless-stopped
+    deploy:
+      placement:
+        constraints:
+          - "node.hostname==homelab-alfa"
+    volumes:
+      - uptime-kuma_data:/app/data
+    networks:
+      - overlay
+      - bridge
+
+volumes:
+  uptime-kuma_data:
