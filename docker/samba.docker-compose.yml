@@ -21,4 +21,4 @@ services:
 
     volumes:
       - /etc/avahi/services/:/external/avahi
-      - /mnt/homelab_seagate/homelab:/shares/homelab
+      - /mnt/homelab_zfs/homelab:/shares/homelab

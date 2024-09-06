@@ -14,8 +14,8 @@ services:
       - "22000:22000/tcp"
       - "22000:22000/udp"
     volumes:
-      - "/mnt/homelab_seagate/homelab/syncthing_config:/config"
-      - "/mnt/homelab_seagate/homelab/syncthing_data:/data"
+      - "/mnt/homelab_zfs/homelab/syncthing_config:/config"
+      - "/mnt/homelab_zfs/homelab/syncthing_data:/data"
     networks:
       - overlay
       - bridge

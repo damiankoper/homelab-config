@@ -22,9 +22,9 @@ services:
       - MACHINE_LEARNING_WORKERS=1 #optional
       - MACHINE_LEARNING_WORKER_TIMEOUT=120 #optional
     volumes:
-      - /mnt/homelab_seagate/homelab/immich_appdata:/config
-      - /mnt/homelab_seagate/homelab/immich_photos:/photos
-      - /mnt/homelab_seagate/homelab/immich_import:/import:ro #optional
+      - /mnt/homelab_zfs/homelab/immich_appdata:/config
+      - /mnt/homelab_zfs/homelab/immich_photos:/photos
+      - /mnt/homelab_zfs/homelab/immich_import:/import:ro #optional
     networks:
       - overlay
       - bridge

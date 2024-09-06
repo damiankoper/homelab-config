@@ -11,7 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@actual-app/api": "^6.7.1",
+    "@actual-app/api": "^6.9.0",
     "@types/node": "^20.12.12",
     "h3": "^1.11.1",
     "listhen": "^1.7.2",
