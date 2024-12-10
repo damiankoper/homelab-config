@@ -21,6 +21,7 @@ lovelace:
 
 alarm_control_panel:
   - platform: manual
+    code_arm_required: false
 
 binary_sensor:
   - platform: impk

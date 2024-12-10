@@ -1,4 +1,4 @@
-################## BUILD ###########################
+# ################## BUILD ###########################
 
 - name: Build dependencies
   hosts: localhost
@@ -94,7 +94,6 @@
       - docker/common.docker-compose.yml
       - docker/n8n.docker-compose.yml
       - docker/actual.docker-compose.yml
-      - docker/autossh.docker-compose.yml
       - docker/proxy.docker-compose.yml
       - docker/pihole.docker-compose.yml
       - docker/syncthing.docker-compose.yml
@@ -177,22 +176,22 @@
   hosts: homelab-bravo
   become: true
 
-  roles:
-    - role: robertdebock.cups
-      vars:
-        cups_listen: "0.0.0.0:631"
-        cups_browsing: "On"
+  # roles:
+  #   - role: robertdebock.cups
+  #     vars:
+  #       cups_listen: "0.0.0.0:631"
+  #       cups_browsing: "On"
 
   vars:
     compose_files:
       - docker/homeassistant.docker-compose.yml
 
   tasks:
-    - name: Join swarm as worker
-      community.docker.docker_swarm:
-        state: join
-        remote_addrs: "{{ hostvars.SWARM_TOKEN_HOLDER.remote_addr }}"
-        join_token: "{{ hostvars.SWARM_TOKEN_HOLDER.worker }}"
+    # - name: Join swarm as worker
+    #   community.docker.docker_swarm:
+    #     state: join
+    #     remote_addrs: "{{ hostvars.SWARM_TOKEN_HOLDER.remote_addr }}"
+    #     join_token: "{{ hostvars.SWARM_TOKEN_HOLDER.worker }}"
 
     - name: Copy homeassistant config
       ansible.builtin.template:

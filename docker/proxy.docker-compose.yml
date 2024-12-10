@@ -7,9 +7,9 @@ services:
         constraints:
           - "node.hostname==homelab-alfa"
     ports:
-      - "8080:80"
-      - "8443:443"
-      - "8081:81"
+      - "80:80"
+      - "443:443"
+      - "81:81"
     volumes:
       - nginx-proxy-manager_data:/data
       - nginx-proxy-manager_letsencrypt:/etc/letsencrypt
