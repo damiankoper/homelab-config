@@ -1,6 +1,6 @@
 services:
   homeassistant:
-    image: ghcr.io/home-assistant/home-assistant:2024.10
+    image: ghcr.io/home-assistant/home-assistant:2025.2
     restart: unless-stopped
     privileged: true
     network_mode: host
@@ -21,7 +21,7 @@ services:
       - 9001:9001
 
   zigbee2mqtt:
-    image: koenkk/zigbee2mqtt
+    image: koenkk/zigbee2mqtt:2
     restart: unless-stopped
     environment:
       - TZ=Europe/Warsaw

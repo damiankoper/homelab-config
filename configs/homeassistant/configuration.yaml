@@ -29,9 +29,6 @@ binary_sensor:
       - news
 sensor:
   - platform: impk
-    stops:
-      - id: {{ hostvars['homelab-bravo'].ha_mpk_stop_1 }}
-      - id: {{ hostvars['homelab-bravo'].ha_mpk_stop_2 }}
   - platform: template
     sensors:
       nightstate:
