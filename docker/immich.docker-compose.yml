@@ -1,6 +1,6 @@
 services:
   immich:
-    image: ghcr.io/imagegenius/immich:latest
+    image: ghcr.io/imagegenius/immich:1.134.0
     restart: unless-stopped
     deploy:
       placement:

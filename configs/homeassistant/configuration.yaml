@@ -12,9 +12,9 @@ scene: !include scenes.yaml
 http:
   use_x_forwarded_for: true
   trusted_proxies:
-   - 127.0.0.1
-   - 172.23.0.0/24
-   - 192.168.0.0/24
+    - 127.0.0.1
+    - 172.23.0.0/24
+    - 192.168.0.0/24
 
 lovelace:
   mode: storage
@@ -23,18 +23,13 @@ alarm_control_panel:
   - platform: manual
     code_arm_required: false
 
-binary_sensor:
-  - platform: impk
-    monitored_conditions:
-      - news
 sensor:
-  - platform: impk
   - platform: template
     sensors:
       nightstate:
         friendly_name: Night State
         value_template: "{% raw %}{% if is_state('sun.sun', 'below_horizon') %}1{% else %}0{% endif %} {% endraw %}"
-        
+
 rest:
   resource: "https://v2.jokeapi.dev/joke/Any"
   scan_interval: 10

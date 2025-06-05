@@ -7,3 +7,5 @@ serial:
 frontend:
   port: 8080
 homeassistant: true
+devices: devices.yml
+groups: groups.yml
